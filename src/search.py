@@ -82,7 +82,7 @@ class ImmowebSearcher(Searcher):
                                item in search_config.items()])
         self.url = base_url + url_params
         # TODO replace print with proper log
-        print(f"Immoweb serach {self.url=}")
+        print(f"Immoweb search {self.url=}")
         self.maxpages = 1
 
     def __enter__(self):
@@ -98,7 +98,21 @@ class ImmowebSearcher(Searcher):
         super().__exit__(exception_type, exception_value, traceback)
 
     def search_all(self):
-        ids = []
+        properties = {}
+
+        def find_id(element):
+            """
+            Take only the numerical part of IDs
+            Immoweb search results IDs follow format 'classified_XXXXXXX'
+            """
+            return element.get_attribute('id').split("_")[1]
+
+        def find_link(element):
+            """
+            Link to property on Immoweb is in the only <a> block
+            """
+            return element.find_element_by_tag_name("a").get_attribute("href")
+
         for page in range(1, self.maxpages + 1):
             self.browser.get(f"{self.url}&page={str(page)}")
             xpath = "//article[starts-with(@id, 'classified_')]"
@@ -106,26 +120,28 @@ class ImmowebSearcher(Searcher):
             if len(results) == 0:
                 print(f"No results found fitting {xpath=}")
             else:
-                # take only the numerical part of IDs
-                # immoweb search results IDs follow format 'classified_XXXXXXX'
-                ids += [result.get_attribute('id').split("_")[1]
-                        for result in results]
-        return ids
+                properties.update({find_id(result): find_link(result)
+                                   for result in results})
+        return properties
 
     def search_new(self):
-        all_ids = self.search_all()
+        all_properties = self.search_all()
         prevs = self.shelf["prevs"]
-        new_ids = [i for i in all_ids if i not in prevs]
-        if len(new_ids) > 0:
-            print(f"Found {len(new_ids)} new properties on Immoweb: {new_ids}")
+        new_properties = {k: v for
+                          k, v in all_properties.items() if
+                          k not in prevs}
+        if len(new_properties) > 0:
+            print(f"Found {len(new_properties)} new properties on Immoweb:"
+                  f"{list(new_properties.keys())}")
+            prevs.update(new_properties)
+            self.shelf["prevs"] = prevs  # TODO check if this line is needed
+            self.shelf.sync()
         else:
-            print("No new properties found on Immoweb :(")
-        prevs = set(list(prevs) + all_ids)
-        self.shelf["prevs"] = prevs
-        self.shelf.sync()
-        return new_ids
+            print("No new properties found on Immoweb")
+        return new_properties
 
 
 if __name__ == '__main__':
     with ImmowebSearcher() as immoweb:
         immoweb.search_new()
+        print(immoweb.shelf["prevs"])
