@@ -15,21 +15,21 @@ from pyhocon import ConfigFactory
 from typing import List
 
 
-def launch_selenium() -> webdriver:
+def launch_selenium(conf: ConfigFactory) -> webdriver:
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options,
-                               executable_path="/usr/bin/geckodriver")
+                               executable_path=conf["gecko_path"])
     driver.implicitly_wait(5)
     return driver
 
 
 class Searcher(ABC):
-    def __init__(self, conf):
+    def __init__(self, conf: ConfigFactory):
         self.conf = conf
 
     def __enter__(self):
-        self.browser = launch_selenium()
+        self.browser = launch_selenium(self.conf["general"])
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -54,9 +54,9 @@ class Searcher(ABC):
 
 
 class ImmowebSearcher(Searcher):
-    def __init__(self, conf):
+    def __init__(self, conf: ConfigFactory):
         super().__init__(conf)
-        search_config = dict(self.conf["search"])
+        search_config = dict(self.conf["immoweb.search"])
         # turn postal codes config into a single string
         search_config["postalCodes"] = ','.join([str(pc)
                                                  for pc in
@@ -67,15 +67,16 @@ class ImmowebSearcher(Searcher):
             search_config["orderBy"] = "newest"
         url_params = '&'.join(["%s=%s" % item for
                                item in search_config.items()])
-        self.url = self.conf["search_url"] + url_params
+        self.url = self.conf["immoweb.search_url"] + url_params
         # TODO replace print with proper log
         print(f"Immoweb search {self.url=}")
         self.maxpages = 1
 
     def __enter__(self):
-        self.shelf = shelve.open("./shelves/immoweb")
+        shelve_dir = self.conf("general.shelve_dir")
+        self.shelf = shelve.open(f"{shelve_dir}immoweb")
         if "prevs" not in self.shelf:
-            self.shelf["prevs"] = set()
+            self.shelf["prevs"] = {}
         super().__enter__()
         return self
 
@@ -130,5 +131,5 @@ class ImmowebSearcher(Searcher):
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    with ImmowebSearcher(conf["immoweb"]) as immoweb:
+    with ImmowebSearcher(conf) as immoweb:
         immoweb.search_new()
