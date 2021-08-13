@@ -28,6 +28,7 @@ class ImmoBot():
         with self.searchFactory(self.conf) as searcher:
             try:
                 schedule.every(15).minutes.do(self.job, searcher)
+                schedule.run_all()
                 while True:
                     schedule.run_pending()
                     time.sleep(60)
