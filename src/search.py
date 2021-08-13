@@ -119,7 +119,7 @@ class ImmowebSearcher(Searcher):
                           k not in prevs}
         if len(new_properties) > 0:
             print(f"Found {len(new_properties)} new properties on Immoweb:"
-                  f"{list(new_prope rties.keys())}")
+                  f"{list(new_properties.keys())}")
             prevs.update(new_properties)
             self.shelf["prevs"] = prevs  # TODO check if this line is needed
             self.shelf.sync()
