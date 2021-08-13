@@ -129,6 +129,10 @@ class ImmowebSearcher(Searcher):
         return new_properties
 
 
+def searchFactory(conf: ConfigFactory) -> Searcher:
+    return ImmowebSearcher(conf)
+
+
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
     with ImmowebSearcher(conf) as immoweb:
