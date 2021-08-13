@@ -11,6 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import shelve
 from abc import ABC, abstractmethod
+from pyhocon import ConfigFactory
 from typing import List
 
 
@@ -24,8 +25,8 @@ def launch_selenium() -> webdriver:
 
 
 class Searcher(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, conf):
+        self.conf = conf
 
     def __enter__(self):
         self.browser = launch_selenium()
@@ -53,34 +54,20 @@ class Searcher(ABC):
 
 
 class ImmowebSearcher(Searcher):
-    def __init__(self):
-        super().__init__()
-        # TODO read these params from a config file
-        search_config = {"postalCodes": [1050,
-                                         1040,
-                                         1000,
-                                         1030,
-                                         1060,
-                                         1210,
-                                         1200,
-                                         1160,
-                                         1180,
-                                         1170],
-                         "minPrice": 350000,
-                         "maxPrice": 540000,
-                         "countries": 'BE',
-                         "orderBy": 'newest'}
+    def __init__(self, conf):
+        super().__init__(conf)
+        search_config = dict(self.conf["search"])
+        # turn postal codes config into a single string
         search_config["postalCodes"] = ','.join([str(pc)
                                                  for pc in
                                                  search_config["postalCodes"]])
-        base_url = 'https://www.immoweb.be/en/search/house/for-sale?'
         # hard code 'newest' search param
         # to avoid listing old properties by mistake
         if "orderBy" not in search_config:
             search_config["orderBy"] = "newest"
         url_params = '&'.join(["%s=%s" % item for
                                item in search_config.items()])
-        self.url = base_url + url_params
+        self.url = self.conf["search_url"] + url_params
         # TODO replace print with proper log
         print(f"Immoweb search {self.url=}")
         self.maxpages = 1
@@ -132,7 +119,7 @@ class ImmowebSearcher(Searcher):
                           k not in prevs}
         if len(new_properties) > 0:
             print(f"Found {len(new_properties)} new properties on Immoweb:"
-                  f"{list(new_properties.keys())}")
+                  f"{list(new_prope rties.keys())}")
             prevs.update(new_properties)
             self.shelf["prevs"] = prevs  # TODO check if this line is needed
             self.shelf.sync()
@@ -142,6 +129,6 @@ class ImmowebSearcher(Searcher):
 
 
 if __name__ == '__main__':
-    with ImmowebSearcher() as immoweb:
+    conf = ConfigFactory.parse_file("configuration/template.conf")
+    with ImmowebSearcher(conf["immoweb"]) as immoweb:
         immoweb.search_new()
-        print(immoweb.shelf["prevs"])
