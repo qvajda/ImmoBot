@@ -73,7 +73,7 @@ class ImmowebSearcher(Searcher):
         self.maxpages = 1
 
     def __enter__(self):
-        shelve_dir = self.conf("general.shelve_dir")
+        shelve_dir = self.conf["general.shelve_dir"]
         self.shelf = shelve.open(f"{shelve_dir}immoweb")
         if "prevs" not in self.shelf:
             self.shelf["prevs"] = {}
