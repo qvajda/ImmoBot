@@ -1,15 +1,14 @@
 from selenium import webdriver
 from pyhocon import ConfigFactory
-from typing import Dict
 from typing import Optional
 
-from browser import launch_selenium
 from details import DetailFinder
+from details import SeleniumDetailFinder
 from search import Searcher
 
 
-class ImmowebDetailFinder(DetailFinder):
-    def __findDetail__(self, url: str, browser: webdriver):
+class ImmowebDetailFinder(SeleniumDetailFinder):
+    def __findDetail__(self, url: str, browser: webdriver) -> str:
         browser.get(url)
         xpath = "//div[@class ='classified__header-content']"
         results = browser.find_elements_by_xpath(xpath)
@@ -34,18 +33,9 @@ class ImmowebDetailFinder(DetailFinder):
         detail += f"{area = } sqm\n"
         price_per_sqm = price / area
         detail += f"{price_per_sqm = :.0f}€ \n"
-        # TODO add agency name ?
+        # TODO add agency name, PEB, garden size, bathrooms
         detail += url
         return detail
-
-    def findFor(self, props: Dict[str, str]):
-        if len(props) == 0:
-            return props
-        browser = launch_selenium(self.conf["general"])
-        detailed = {prop: self.__findDetail__(url, browser) for
-                    prop, url in props.items()}
-        browser.quit()
-        return detailed
 
 
 class ImmowebSearcher(Searcher):
@@ -106,12 +96,12 @@ def immowebFactory(conf: ConfigFactory) -> Searcher:
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    # immoweb_detail = ImmowebDetailFinder(conf)
-    # test_id = "9355678"
-    # test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
-    # detailed = immoweb_detail.findFor(props={test_id: test_url, })
-    # for prop, detail in detailed.items():
-    #     print(f"{prop=} :")
-    #     print(detail)
-    with immowebFactory(conf) as immoweb:
-        immoweb.search_new()
+    immoweb_detail = ImmowebDetailFinder(conf)
+    test_id = "9355678"
+    test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
+    detailed = immoweb_detail.findFor(props={test_id: test_url, })
+    for prop, detail in detailed.items():
+        print(f"{prop=} :")
+        print(detail)
+    # with immowebFactory(conf) as immoweb:
+    #     immoweb.search_new()
