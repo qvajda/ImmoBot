@@ -1,15 +1,45 @@
 from selenium import webdriver
 from pyhocon import ConfigFactory
-from typing import Dict
 from typing import Optional
 
-from browser import launch_selenium
 from details import DetailFinder
+from details import SeleniumDetailFinder
 from search import Searcher
 
 
-class ImmovlanDetailFinder(DetailFinder):
-    pass
+class ImmovlanDetailFinder(SeleniumDetailFinder):
+    def __findDetail__(self, url: str, browser: webdriver) -> str:
+        browser.get(url)
+        xpath = "//div[@id = 'property-details']"
+        results = browser.find_elements_by_xpath(xpath)
+        if len(results) == 0:
+            print(f"Can't find Immovlan formatted details for {url=}")
+            return url
+        info = results[0]
+        print(f"Found some details for {url=}")
+        street_xpath = ".//span[contains(@class, 'street-line')]"
+        street = info.find_element_by_xpath(street_xpath).text.strip()
+        # TODO Exception handling if no address ?
+        city_xpath = ".//span[contains(@class, 'city-line')]"
+        city = info.find_element_by_xpath(city_xpath).text.strip()
+        address = f"{city} | {street}"
+        detail = f"{address = }\n"
+        price_xpath = ".//span[contains(@class, 'price-label')]"
+        price_elem = info.find_element_by_xpath(price_xpath)
+        price = int(price_elem.text.strip().replace("\uf202", "")[:-1])
+        detail += f"{price = }€\n"
+        bedroom_xpath = ".//div[contains(@class, 'NrOfBedrooms')]"
+        bedrooms = int(info.find_element_by_xpath(bedroom_xpath).text.strip())
+        detail += f"{bedrooms = }\n"
+        area_xpath = ".//div[contains(@class, 'LivableSurface')]"
+        area = int(info.find_element_by_xpath(area_xpath)
+                       .text.strip().split(" ")[0])
+        detail += f"{area = } sqm\n"
+        price_per_sqm = price / area
+        detail += f"{price_per_sqm = :.0f}€ \n"
+        # TODO add agency name, PEB, garden size, bathrooms
+        detail += url
+        return detail
 
 
 class ImmovlanSearcher(Searcher):
@@ -73,12 +103,12 @@ def immovlanFactory(conf: ConfigFactory) -> Searcher:
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    # immovlan_detail = ImmovlanDetailFinder(conf)
-    # test_id = ""
-    # test_url = ""
-    # detailed = immovlan_detail.findFor(props={test_id: test_url, })
-    # for prop, detail in detailed.items():
-    #     print(f"{prop=} :")
-    #     print(detail)
-    with ImmovlanSearcher(conf) as immovlan:
-        immovlan.search_new()
+    immovlan_detail = ImmovlanDetailFinder(conf)
+    test_id = "vam50427"
+    test_url = "https://immo.vlan.be/en/detail/residence/for-sale/1040/etterbeek/vam50427"
+    detailed = immovlan_detail.findFor(props={test_id: test_url, })
+    for prop, detail in detailed.items():
+        print(f"{prop=} :")
+        print(detail)
+    # with ImmovlanSearcher(conf) as immovlan:
+    #     immovlan.search_new()
