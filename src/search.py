@@ -126,6 +126,11 @@ class ImmowebSearcher(Searcher):
             self.shelf.sync()
         else:
             print("No new properties found on Immoweb")
+            if self.conf["immoweb.test_send"]:
+                print("Test sending with one of the latest seen properties")
+                new_properties = {k: v
+                                  for k, v in
+                                  list(all_properties.items())[0:1]}
         return new_properties
 
 
