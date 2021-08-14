@@ -4,7 +4,7 @@ from typing import Callable
 import schedule
 import time
 from search import Searcher
-from search import searchFactory
+from immoweb import immowebFactory
 
 
 class ImmoBot():
@@ -39,5 +39,5 @@ class ImmoBot():
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    bot = ImmoBot(conf, searchFactory)
+    bot = ImmoBot(conf, immowebFactory)
     bot.start()

@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from pyhocon import ConfigFactory
 from typing import List
 from browser import launch_selenium
-from immoweb import ImmowebSearcher
 
 
 class Searcher(ABC):
@@ -34,11 +33,30 @@ class Searcher(ABC):
         pass
 
 
-def searchFactory(conf: ConfigFactory) -> Searcher:
-    return ImmowebSearcher(conf)
+class MultiSearcher(Searcher):
+    def __init__(self, conf: ConfigFactory,
+                 searchers: List[Searcher]):
+        super().__init__(conf)
+        self.searchers = searchers
 
+    def __enter__(self):
+        for searcher in self.searchers:
+            searcher.__enter__()
+        return self
 
-if __name__ == '__main__':
-    conf = ConfigFactory.parse_file("configuration/template.conf")
-    with ImmowebSearcher(conf) as immoweb:
-        immoweb.search_new()
+    def __exit__(self, exception_type, exception_value, traceback):
+        for searcher in self.searchers:
+            searcher.__exit__()
+        # no particular treatment in case of exceptions
+
+    def search_all(self) -> List[str]:
+        res = {}
+        for searcher in self.searchers:
+            res.update(searcher.search_all())
+        return res
+
+    def search_new(self) -> List[str]:
+        res = {}
+        for searcher in self.searchers:
+            res.update(searcher.search_new())
+        return res
