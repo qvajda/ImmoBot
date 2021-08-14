@@ -1,20 +1,36 @@
 from abc import ABC, abstractmethod
 from pyhocon import ConfigFactory
 from typing import List
+import shelve
+
+from details import DetailFinder
 from browser import launch_selenium
 
 
 class Searcher(ABC):
-    def __init__(self, conf: ConfigFactory):
+    def __init__(self, conf: ConfigFactory, detailFinder: DetailFinder):
         self.conf = conf
+        self.detailFinder = detailFinder
 
     def __enter__(self):
+        # startup selenium browser
         self.browser = launch_selenium(self.conf["general"])
+        # open up connection to shelve
+        shelve_dir = self.conf["general.shelve_dir"]
+        self.shelf = shelve.open(f"{shelve_dir}{self.name}")
+        if "prevs" not in self.shelf:  # first time setup
+            self.shelf["prevs"] = {}
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        self.shelf.close()
         self.browser.quit()
         # no particular treatment in case of exceptions
+
+    @property
+    @abstractmethod
+    def name(self):
+        pass
 
     @abstractmethod
     def search_all(self) -> List[str]:
@@ -24,16 +40,35 @@ class Searcher(ABC):
         """
         pass
 
-    @abstractmethod
     def search_new(self) -> List[str]:
         """
           Method to search properties on given immo provider
           and find only the new listings not previously found
         """
-        pass
+        all_properties = self.search_all()
+        prevs = self.shelf["prevs"]
+        new_properties = {k: v for
+                          k, v in all_properties.items() if
+                          k not in prevs}
+        if len(new_properties) > 0:
+            print(f"Found {len(new_properties)} new properties on {self.name}:"
+                  f"{list(new_properties.keys())}")
+            prevs.update(new_properties)
+            self.shelf["prevs"] = prevs  # TODO check if this line is needed
+            self.shelf.sync()
+        else:
+            print(f"No new properties found on {self.name}")
+            if self.conf[f"{self.name}.test_send"]:
+                print("Test sending with one of the latest seen properties")
+                new_properties = {k: v
+                                  for k, v in
+                                  list(all_properties.items())[0:1]}
+        return self.detailFinder.findFor(new_properties)
 
 
 class MultiSearcher(Searcher):
+    name = "MultiSearcher"
+
     def __init__(self, conf: ConfigFactory,
                  searchers: List[Searcher]):
         super().__init__(conf)

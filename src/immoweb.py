@@ -2,7 +2,6 @@ from selenium import webdriver
 from pyhocon import ConfigFactory
 from typing import Dict
 from typing import Optional
-import shelve
 
 from browser import launch_selenium
 from details import DetailFinder
@@ -50,13 +49,13 @@ class ImmowebDetailFinder(DetailFinder):
 
 
 class ImmowebSearcher(Searcher):
+    name = "immoweb"
+
     def __init__(self, conf: ConfigFactory,
                  detailFinder: Optional[DetailFinder] = None):
-        super().__init__(conf)
         if detailFinder is None:
-            self.detailFinder = ImmowebDetailFinder(conf)
-        else:
-            self.detailFinder = detailFinder
+            detailFinder = ImmowebDetailFinder(conf)
+        super().__init__(conf, detailFinder)
         search_config = dict(self.conf["immoweb.search"])
         # turn postal codes config into a single string
         search_config["postalCodes"] = ','.join([str(pc)
@@ -72,19 +71,6 @@ class ImmowebSearcher(Searcher):
         # TODO replace print with proper log
         print(f"Immoweb search {self.url=}")
         self.maxpages = 1
-
-    def __enter__(self):
-        shelve_dir = self.conf["general.shelve_dir"]
-        self.shelf = shelve.open(f"{shelve_dir}immoweb")
-        if "prevs" not in self.shelf:
-            self.shelf["prevs"] = {}
-        super().__enter__()
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.shelf.close()
-        # no particular treatment in case of exceptions
-        super().__exit__(exception_type, exception_value, traceback)
 
     def search_all(self):
         properties = {}
@@ -113,27 +99,6 @@ class ImmowebSearcher(Searcher):
                                    for result in results})
         return properties
 
-    def search_new(self):
-        all_properties = self.search_all()
-        prevs = self.shelf["prevs"]
-        new_properties = {k: v for
-                          k, v in all_properties.items() if
-                          k not in prevs}
-        if len(new_properties) > 0:
-            print(f"Found {len(new_properties)} new properties on Immoweb:"
-                  f"{list(new_properties.keys())}")
-            prevs.update(new_properties)
-            self.shelf["prevs"] = prevs  # TODO check if this line is needed
-            self.shelf.sync()
-        else:
-            print("No new properties found on Immoweb")
-            if self.conf["immoweb.test_send"]:
-                print("Test sending with one of the latest seen properties")
-                new_properties = {k: v
-                                  for k, v in
-                                  list(all_properties.items())[0:1]}
-        return self.detailFinder.findFor(new_properties)
-
 
 def immowebFactory(conf: ConfigFactory) -> Searcher:
     return ImmowebSearcher(conf)
@@ -141,10 +106,12 @@ def immowebFactory(conf: ConfigFactory) -> Searcher:
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    immoweb_detail = ImmowebDetailFinder(conf)
-    test_id = "9355678"
-    test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
-    detailed = immoweb_detail.findFor(props={test_id: test_url, })
-    for prop, detail in detailed.items():
-        print(f"{prop=} :")
-        print(detail)
+    # immoweb_detail = ImmowebDetailFinder(conf)
+    # test_id = "9355678"
+    # test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
+    # detailed = immoweb_detail.findFor(props={test_id: test_url, })
+    # for prop, detail in detailed.items():
+    #     print(f"{prop=} :")
+    #     print(detail)
+    with immowebFactory(conf) as immoweb:
+        immoweb.search_new()
