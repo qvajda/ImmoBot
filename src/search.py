@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from pyhocon import ConfigFactory
 from typing import List
+from typing import Optional
 import shelve
 
 from details import DetailFinder
@@ -8,8 +9,11 @@ from browser import launch_selenium
 
 
 class Searcher(ABC):
-    def __init__(self, conf: ConfigFactory, detailFinder: DetailFinder):
+    def __init__(self, conf: ConfigFactory,
+                 detailFinder: Optional[DetailFinder] = None):
         self.conf = conf
+        if detailFinder is None:
+            detailFinder = DetailFinder(conf)
         self.detailFinder = detailFinder
 
     def __enter__(self):
@@ -81,7 +85,7 @@ class MultiSearcher(Searcher):
 
     def __exit__(self, exception_type, exception_value, traceback):
         for searcher in self.searchers:
-            searcher.__exit__()
+            searcher.__exit__(exception_type, exception_value, traceback)
         # no particular treatment in case of exceptions
 
     def search_all(self) -> List[str]:

@@ -4,7 +4,14 @@ from typing import Callable
 import schedule
 import time
 from search import Searcher
+from search import MultiSearcher
 from immoweb import immowebFactory
+from immovlan import immovlanFactory
+
+
+def allSearchersFactory(conf: ConfigFactory) -> Searcher:
+    return MultiSearcher(conf, [immowebFactory(conf),
+                                immovlanFactory(conf)])
 
 
 class ImmoBot():
