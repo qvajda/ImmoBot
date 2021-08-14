@@ -2,7 +2,10 @@ import shelve
 from abc import ABC, abstractmethod
 from pyhocon import ConfigFactory
 from typing import List
+from typing import Optional
 from browser import launch_selenium
+from details import DetailFinder
+from details import ImmowebDetailFinder
 
 
 class Searcher(ABC):
@@ -35,8 +38,13 @@ class Searcher(ABC):
 
 
 class ImmowebSearcher(Searcher):
-    def __init__(self, conf: ConfigFactory):
+    def __init__(self, conf: ConfigFactory,
+                 detailFinder: Optional[DetailFinder] = None):
         super().__init__(conf)
+        if detailFinder is None:
+            self.detailFinder = ImmowebDetailFinder(conf)
+        else:
+            self.detailFinder = detailFinder
         search_config = dict(self.conf["immoweb.search"])
         # turn postal codes config into a single string
         search_config["postalCodes"] = ','.join([str(pc)
@@ -112,7 +120,7 @@ class ImmowebSearcher(Searcher):
                 new_properties = {k: v
                                   for k, v in
                                   list(all_properties.items())[0:1]}
-        return new_properties
+        return self.detailFinder.findFor(new_properties)
 
 
 def searchFactory(conf: ConfigFactory) -> Searcher:

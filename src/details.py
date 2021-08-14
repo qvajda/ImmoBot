@@ -39,12 +39,13 @@ class ImmowebDetailFinder(DetailFinder):
         price_per_sqm = price / area
         detail += f"{price_per_sqm = :.0f}€ \n"
         # TODO add agency name ?
+        detail += url
         return detail
 
     def findFor(self, props: Dict[str, str]):
         if len(props) == 0:
             return props
-        browser = launch_selenium(self.conf)
+        browser = launch_selenium(self.conf["general"])
         detailed = {prop: self.__findDetail__(url, browser) for
                     prop, url in props.items()}
         browser.quit()
@@ -53,7 +54,7 @@ class ImmowebDetailFinder(DetailFinder):
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    immoweb_detail = ImmowebDetailFinder(conf["general"])
+    immoweb_detail = ImmowebDetailFinder(conf)
     test_id = "9355678"
     test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
     detailed = immoweb_detail.findFor(props={test_id: test_url, })
