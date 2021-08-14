@@ -5,7 +5,7 @@ from typing import Optional
 import shelve
 
 from browser import launch_selenium
-from detail import DetailFinder
+from details import DetailFinder
 from search import Searcher
 
 
