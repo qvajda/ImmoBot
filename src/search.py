@@ -1,27 +1,8 @@
-#!/usr/bin/python3
-# Usage:
-# - Fill in the settings, then run with `python3 ImmowebScraper.py`.
-# - First run won't send any mails (or you'd get dozens at once).
-# Requirements:
-# - python3
-# - selenium
-# - phantomjs
-
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 import shelve
 from abc import ABC, abstractmethod
 from pyhocon import ConfigFactory
 from typing import List
-
-
-def launch_selenium(conf: ConfigFactory) -> webdriver:
-    options = Options()
-    options.headless = True
-    driver = webdriver.Firefox(options=options,
-                               executable_path=conf["gecko_path"])
-    driver.implicitly_wait(5)
-    return driver
+from browser import launch_selenium
 
 
 class Searcher(ABC):
