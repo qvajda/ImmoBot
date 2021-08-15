@@ -7,11 +7,13 @@ from search import Searcher
 from search import MultiSearcher
 from immoweb import immowebFactory
 from immovlan import immovlanFactory
+from realo import realoFactory
 
 
 def allSearchersFactory(conf: ConfigFactory) -> Searcher:
     return MultiSearcher(conf, [immowebFactory(conf),
-                                immovlanFactory(conf)])
+                                immovlanFactory(conf),
+                                realoFactory(conf)])
 
 
 class ImmoBot():

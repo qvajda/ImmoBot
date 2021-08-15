@@ -127,7 +127,8 @@ class RealoSearcher(MultiSearcher):
     """
     name = "Realo"
 
-    def __init__(self, conf: ConfigFactory):
+    def __init__(self, conf: ConfigFactory,
+                 detailFinder: Optional[DetailFinder] = None):
         postalCodes = conf["realo.search.postalCodes"]
         searchers = []
 
@@ -138,7 +139,8 @@ class RealoSearcher(MultiSearcher):
             cp_conf.put("realo.postalCode", postalCode)
             return cp_conf
         searchers = [SingleRealoSearcher(copyConfForSingleLocation(conf,
-                                                                   postalCode))
+                                                                   postalCode),
+                                         detailFinder)
                      for postalCode in postalCodes]
 
         super().__init__(conf, searchers)
@@ -149,13 +151,13 @@ def realoFactory(conf: ConfigFactory) -> Searcher:
 
 
 if __name__ == '__main__':
-    conf = ConfigFactory.parse_file("configuration/template.conf")
-    realo_detail = RealoDetailFinder(conf)
-    test_id = "103682"
-    test_url = "https://www.realo.be/en/rue-prince-royal-21-1050-ixelles-elsene/103682?l=244615180"
-    detailed = realo_detail.findFor(props={test_id: test_url, })
-    for prop, detail in detailed.items():
-        print(f"{prop=} :")
-        print(detail)
-    # with RealoSearcher(conf) as realo:
-    #     print(realo.search_all())
+    conf = ConfigFactory.parse_file("configuration/myConf.conf")
+    # realo_detail = RealoDetailFinder(conf)
+    # test_id = "103682"
+    # test_url = "https://www.realo.be/en/rue-prince-royal-21-1050-ixelles-elsene/103682?l=244615180"
+    # detailed = realo_detail.findFor(props={test_id: test_url, })
+    # for prop, detail in detailed.items():
+    #     print(f"{prop=} :")
+    #     print(detail)
+    with RealoSearcher(conf) as realo:
+        print(realo.search_new())
