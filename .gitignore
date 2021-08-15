@@ -133,3 +133,6 @@ shelves/
 
 # personal configuration file (containing API key and search details)
 configuration/myConf.conf
+
+# profile data from cProfile
+*.prof
