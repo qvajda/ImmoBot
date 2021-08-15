@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# shelves used for storage of properties
+shelves/
+
+# personal configuration file (containing API key and search details)
+configuration/myConf.conf
