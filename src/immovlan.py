@@ -3,12 +3,13 @@ from pyhocon import ConfigFactory
 from typing import Optional
 
 from details import DetailFinder
+from details import Details
 from details import SeleniumDetailFinder
 from search import Searcher
 
 
 class ImmovlanDetailFinder(SeleniumDetailFinder):
-    def __findDetail__(self, url: str, browser: webdriver) -> str:
+    def __findDetail__(self, url: str, browser: webdriver) -> Details:
         browser.get(url)
         xpath = "//div[@id = 'property-details']"
         results = browser.find_elements_by_xpath(xpath)
@@ -18,28 +19,27 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
         info = results[0]
         print(f"Found some details for {url=}")
         street_xpath = ".//span[contains(@class, 'street-line')]"
-        street = info.find_element_by_xpath(street_xpath).text.strip()
+        street = info.find_element_by_xpath(street_xpath)\
+                     .get_attribute("innerHTML").strip()
         # TODO Exception handling if no address ?
         city_xpath = ".//span[contains(@class, 'city-line')]"
         city = info.find_element_by_xpath(city_xpath).text.strip()
         address = f"{city} | {street}"
-        detail = f"{address = }\n"
         price_xpath = ".//span[contains(@class, 'price-label')]"
         price_elem = info.find_element_by_xpath(price_xpath)
-        price = int(price_elem.text.strip().replace("\uf202", "")[:-1])
-        detail += f"{price = }€\n"
+        price = int(price_elem.text.strip().replace("\u202f", "")[:-1])
+        text_xpath = ".//div[@class = 'ico-text']"
         bedroom_xpath = ".//div[contains(@class, 'NrOfBedrooms')]"
-        bedrooms = int(info.find_element_by_xpath(bedroom_xpath).text.strip())
-        detail += f"{bedrooms = }\n"
+        bedroom_elem = info.find_element_by_xpath(bedroom_xpath)
+        bedrooms = int(bedroom_elem.find_element_by_xpath(text_xpath)
+                                   .get_attribute("innerHTML").strip())
         area_xpath = ".//div[contains(@class, 'LivableSurface')]"
-        area = int(info.find_element_by_xpath(area_xpath)
-                       .text.strip().split(" ")[0])
-        detail += f"{area = } sqm\n"
-        price_per_sqm = price / area
-        detail += f"{price_per_sqm = :.0f}€ \n"
+        area_elem = info.find_element_by_xpath(area_xpath)
+        area = int(area_elem.find_element_by_xpath(text_xpath)
+                            .get_attribute("innerHTML")
+                            .strip().split(" ")[0])
         # TODO add agency name, PEB, garden size, bathrooms
-        detail += url
-        return detail
+        return Details(price, address, url, bedrooms, area)
 
 
 class ImmovlanSearcher(Searcher):

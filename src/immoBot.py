@@ -25,7 +25,7 @@ class ImmoBot():
         search_results = searcher.search_new()
         if len(search_results) > 0:
             print("Found new property(ies) and sending them to telegram...")
-            messages = [f"New property found {k}\n{v}"
+            messages = [f"New property found {k}\n{v!s}"
                         for k, v in search_results.items()]
             ts.send(messages=messages)
             print("... property(ies) sent")

@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from pyhocon import ConfigFactory
 from typing import List
 from typing import Optional
+from typing import Dict
 import shelve
 
 from details import DetailFinder
+from details import Details
 from browser import launch_selenium
 
 
@@ -40,14 +42,16 @@ class Searcher(ABC):
     def search_all(self) -> List[str]:
         """
           Method to search properties on given immo provider
-          and find all the latest listings
+          and find all the latest listings.
+          Properties IDs and urls are returned
         """
         pass
 
-    def search_new(self) -> List[str]:
+    def search_new(self) -> Dict[str, Details]:
         """
           Method to search properties on given immo provider
-          and find only the new listings not previously found
+          and find only the new listings not previously found.
+          IDs and full details are returned.
         """
         all_properties = self.search_all()
         prevs = self.shelf["prevs"]
@@ -94,7 +98,7 @@ class MultiSearcher(Searcher):
             res.update(searcher.search_all())
         return res
 
-    def search_new(self) -> List[str]:
+    def search_new(self) -> Dict[str, Details]:
         res = {}
         for searcher in self.searchers:
             res.update(searcher.search_new())

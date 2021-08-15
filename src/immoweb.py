@@ -3,12 +3,13 @@ from pyhocon import ConfigFactory
 from typing import Optional
 
 from details import DetailFinder
+from details import Details
 from details import SeleniumDetailFinder
 from search import Searcher
 
 
 class ImmowebDetailFinder(SeleniumDetailFinder):
-    def __findDetail__(self, url: str, browser: webdriver) -> str:
+    def __findDetail__(self, url: str, browser: webdriver) -> Details:
         browser.get(url)
         xpath = "//div[@class ='classified__header-content']"
         results = browser.find_elements_by_xpath(xpath)
@@ -19,23 +20,16 @@ class ImmowebDetailFinder(SeleniumDetailFinder):
         infos = [line.strip() for line in results[0].text.split("\n")]
         address = infos[-2].replace("Ask for the exact address",
                                     "No exact address")
-        detail = f"{address = }\n"
         price = [int(line[:-1])
                  for line in infos if
                  line.endswith('€')][0]
-        detail += f"{price = }€\n"
         bedrooms_area = [line.split('|')
                          for line in infos if
                          line.endswith('m²')][0]
         bedrooms = int(bedrooms_area[0].strip().split(' ')[0])
-        detail += f"{bedrooms = }\n"
         area = int(bedrooms_area[1].strip().split(' ')[0])
-        detail += f"{area = } sqm\n"
-        price_per_sqm = price / area
-        detail += f"{price_per_sqm = :.0f}€ \n"
         # TODO add agency name, PEB, garden size, bathrooms
-        detail += url
-        return detail
+        return Details(price, address, url, bedrooms, area)
 
 
 class ImmowebSearcher(Searcher):
