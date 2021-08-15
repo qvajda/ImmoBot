@@ -4,6 +4,7 @@ from typing import Optional
 
 from details import DetailFinder
 from details import Details
+from details import CompleteDetails
 from details import SeleniumDetailFinder
 from search import Searcher
 
@@ -29,7 +30,7 @@ class ImmowebDetailFinder(SeleniumDetailFinder):
         bedrooms = int(bedrooms_area[0].strip().split(' ')[0])
         area = int(bedrooms_area[1].strip().split(' ')[0])
         # TODO add agency name, PEB, garden size, bathrooms
-        return Details(price, address, url, bedrooms, area)
+        return CompleteDetails(url, price, address, bedrooms, area)
 
 
 class ImmowebSearcher(Searcher):

@@ -4,6 +4,7 @@ from typing import Optional
 
 from details import DetailFinder
 from details import Details
+from details import CompleteDetails
 from details import SeleniumDetailFinder
 from search import Searcher
 
@@ -39,7 +40,7 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
                             .get_attribute("innerHTML")
                             .strip().split(" ")[0])
         # TODO add agency name, PEB, garden size, bathrooms
-        return Details(price, address, url, bedrooms, area)
+        return CompleteDetails(url, price, address, bedrooms, area)
 
 
 class ImmovlanSearcher(Searcher):
