@@ -1,6 +1,7 @@
 from selenium import webdriver
 from pyhocon import ConfigFactory
 from typing import Optional
+from typing import List
 import copy
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -9,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait as wait
 from logging_utils import initLogging
 from details import DetailFinder
 from details import Details
+from details import CompleteDetails
 from details import SeleniumDetailFinder
 from search import Searcher
 from search import MultiSearcher
@@ -16,37 +18,34 @@ from search import MultiSearcher
 
 class RealoDetailFinder(SeleniumDetailFinder):
     def __findDetail__(self, url: str, browser: webdriver) -> Details:
-        # browser.get(url)
-        # xpath = "//div[@id = 'property-details']"
-        # results = browser.find_elements_by_xpath(xpath)
-        # if len(results) == 0:
-        #     print(f"Can't find Realo formatted details for {url=}")
-        #     return url
-        # info = results[0]
-        # print(f"Found some details for {url=}")
-        # street_xpath = ".//span[contains(@class, 'street-line')]"
-        # street = info.find_element_by_xpath(street_xpath)\
-        #              .get_attribute("innerHTML").strip()
-        # # TODO Exception handling if no address ?
-        # city_xpath = ".//span[contains(@class, 'city-line')]"
-        # city = info.find_element_by_xpath(city_xpath).text.strip()
-        # address = f"{city} | {street}"
-        # price_xpath = ".//span[contains(@class, 'price-label')]"
-        # price_elem = info.find_element_by_xpath(price_xpath)
-        # price = int(price_elem.text.strip().replace("\u202f", "")[:-1])
-        # text_xpath = ".//div[@class = 'ico-text']"
-        # bedroom_xpath = ".//div[contains(@class, 'NrOfBedrooms')]"
-        # bedroom_elem = info.find_element_by_xpath(bedroom_xpath)
-        # bedrooms = int(bedroom_elem.find_element_by_xpath(text_xpath)
-        #                            .get_attribute("innerHTML").strip())
-        # area_xpath = ".//div[contains(@class, 'LivableSurface')]"
-        # area_elem = info.find_element_by_xpath(area_xpath)
-        # area = int(area_elem.find_element_by_xpath(text_xpath)
-        #                     .get_attribute("innerHTML")
-        #                     .strip().split(" ")[0])
+        browser.get(url)
+        xpath = "//div[@class='property__container']"
+        results = browser.find_elements_by_xpath(xpath)
+        if len(results) == 0:
+            self.logger.warn(
+                f"Can't find Realo formatted details for {url=}")
+            return Details(url)
+        info = results[0]
+        self.logger.debug(f"Found some details for {url=}")
+        address_xpath = ".//h1[@class='address']"
+        address = info.find_element_by_xpath(address_xpath)\
+                      .get_attribute("innerHTML").strip()
+        price_xpath = ".//span[@itemprop = 'price']"
+        price_elem = info.find_element_by_xpath(price_xpath)
+        price = int(price_elem.get_attribute("innerHTML").strip())
+        features_xpath = ".//div[@class = 'component-property-features']"
+        features = info.find_element_by_xpath(features_xpath).text.split("\n")
+
+        def get_value_at_line_starting_with(lines: List[str],
+                                            prefix: str) -> str:
+            relevant_line = [line.strip() for line in lines
+                             if line.startswith(prefix)][0]
+            return relevant_line.split(" ")[-1]
+        bedrooms = int(get_value_at_line_starting_with(features, "Bedrooms"))
+        area = int(get_value_at_line_starting_with(features,
+                                                   "Habitable area")[:-2])
         # TODO add agency name, PEB, garden size, bathrooms
-        # return CompleteDetails(url, price, address, bedrooms, area)
-        return Details(url)
+        return CompleteDetails(url, price, address, bedrooms, area)
 
 
 class SingleRealoSearcher(Searcher):
@@ -148,18 +147,18 @@ class RealoSearcher(MultiSearcher):
 
 
 def realoFactory(conf: ConfigFactory) -> Searcher:
-    return RealoSearcher(conf, DetailFinder(conf))
+    return RealoSearcher(conf)
 
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/myConf.conf")
     initLogging(conf)
-    # realo_detail = RealoDetailFinder(conf)
-    # test_id = "103682"
-    # test_url = "https://www.realo.be/en/rue-prince-royal-21-1050-ixelles-elsene/103682?l=244615180"
-    # detailed = realo_detail.findFor(props={test_id: test_url, })
-    # for prop, detail in detailed.items():
-    #     print(f"{prop=} :")
-    #     print(detail)
-    with RealoSearcher(conf) as realo:
-        print(realo.search_new())
+    realo_detail = RealoDetailFinder(conf)
+    test_id = "103682"
+    test_url = "https://www.realo.be/en/rue-prince-royal-21-1050-ixelles-elsene/103682?l=244615180"
+    detailed = realo_detail.findFor(props={test_id: test_url, })
+    for prop, detail in detailed.items():
+        print(f"{prop=} :")
+        print(detail)
+    # with RealoSearcher(conf) as realo:
+    #     print(realo.search_new())
