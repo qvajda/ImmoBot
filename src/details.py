@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from selenium import webdriver
+from logging import getLogger
 
 from browser import launch_selenium
 
@@ -43,6 +44,7 @@ class CompleteDetails(Details):
 class DetailFinder():
     def __init__(self, conf: ConfigFactory):
         self.conf = conf
+        self.logger = getLogger()
 
     def findFor(self, props: Dict[str, str]) -> Dict[str, Details]:
         return {k: Details(v) for k, v in props.items()}

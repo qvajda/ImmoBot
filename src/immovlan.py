@@ -2,6 +2,7 @@ from selenium import webdriver
 from pyhocon import ConfigFactory
 from typing import Optional
 
+from logging_utils import initLogging
 from details import DetailFinder
 from details import Details
 from details import CompleteDetails
@@ -15,10 +16,11 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
         xpath = "//div[@id = 'property-details']"
         results = browser.find_elements_by_xpath(xpath)
         if len(results) == 0:
-            print(f"Can't find Immovlan formatted details for {url=}")
+            self.logger.warn(
+                f"Can't find Immovlan formatted details for {url=}")
             return url
         info = results[0]
-        print(f"Found some details for {url=}")
+        self.logger.debug(f"Found some details for {url=}")
         street_xpath = ".//span[contains(@class, 'street-line')]"
         street = info.find_element_by_xpath(street_xpath)\
                      .get_attribute("innerHTML").strip()
@@ -64,7 +66,7 @@ class ImmovlanSearcher(Searcher):
                                item in search_config.items()])
         self.url = self.conf["immovlan.search_url"] + url_params
         # TODO replace print with proper log
-        print(f"Immovlan search {self.url=}")
+        self.logger.debug(f"Immovlan search {self.url=}")
         self.maxpages = 1
 
     def search_all(self):
@@ -90,7 +92,7 @@ class ImmovlanSearcher(Searcher):
             xpath = "//article[@class='list-view-item mb-3 card card-border']"
             results = self.browser.find_elements_by_xpath(xpath)
             if len(results) == 0:
-                print(f"No results found fitting {xpath=}")
+                self.logger.warn(f"No results found fitting {xpath=}")
             else:
                 properties.update({find_id(result): find_link(result)
                                    for result in results})
@@ -103,6 +105,7 @@ def immovlanFactory(conf: ConfigFactory) -> Searcher:
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
+    initLogging(conf)
     immovlan_detail = ImmovlanDetailFinder(conf)
     test_id = "vam50427"
     test_url = "https://immo.vlan.be/en/detail/residence/for-sale/1040/etterbeek/vam50427"

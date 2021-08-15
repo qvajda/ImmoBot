@@ -2,6 +2,7 @@ from selenium import webdriver
 from pyhocon import ConfigFactory
 from typing import Optional
 
+from logging_utils import initLogging
 from details import DetailFinder
 from details import Details
 from details import CompleteDetails
@@ -15,9 +16,10 @@ class ImmowebDetailFinder(SeleniumDetailFinder):
         xpath = "//div[@class ='classified__header-content']"
         results = browser.find_elements_by_xpath(xpath)
         if len(results) == 0:
-            print(f"Can't find Immoweb formatted details for {url=}")
+            self.logger.warn(
+                f"Can't find Immoweb formatted details for {url=}")
             return url
-        print(f"Found some details for {url=}")
+        self.logger.debug(f"Found some details for {url=}")
         infos = [line.strip() for line in results[0].text.split("\n")]
         address = infos[-2].replace("Ask for the exact address",
                                     "No exact address")
@@ -54,7 +56,7 @@ class ImmowebSearcher(Searcher):
                                item in search_config.items()])
         self.url = self.conf["immoweb.search_url"] + url_params
         # TODO replace print with proper log
-        print(f"Immoweb search {self.url=}")
+        self.logger.debug(f"Immoweb search {self.url=}")
         self.maxpages = 1
 
     def search_all(self):
@@ -78,7 +80,7 @@ class ImmowebSearcher(Searcher):
             xpath = "//article[starts-with(@id, 'classified_')]"
             results = self.browser.find_elements_by_xpath(xpath)
             if len(results) == 0:
-                print(f"No results found fitting {xpath=}")
+                self.logger.warn(f"No results found fitting {xpath=}")
             else:
                 properties.update({find_id(result): find_link(result)
                                    for result in results})
@@ -91,12 +93,14 @@ def immowebFactory(conf: ConfigFactory) -> Searcher:
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
-    immoweb_detail = ImmowebDetailFinder(conf)
-    test_id = "9355678"
-    test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
-    detailed = immoweb_detail.findFor(props={test_id: test_url, })
-    for prop, detail in detailed.items():
-        print(f"{prop=} :")
-        print(detail)
-    # with immowebFactory(conf) as immoweb:
-    #     immoweb.search_new()
+    initLogging(conf)
+    # getattr(mymodule, variablename)
+    # immoweb_detail = ImmowebDetailFinder(conf)
+    # test_id = "9355678"
+    # test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
+    # detailed = immoweb_detail.findFor(props={test_id: test_url, })
+    # for prop, detail in detailed.items():
+    #     print(f"{prop=} :")
+    #     print(detail)
+    with immowebFactory(conf) as immoweb:
+        immoweb.search_new()

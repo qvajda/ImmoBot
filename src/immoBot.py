@@ -8,6 +8,9 @@ from search import MultiSearcher
 from immoweb import immowebFactory
 from immovlan import immovlanFactory
 from realo import realoFactory
+from logging import getLogger
+
+from logging_utils import initLogging
 
 
 def allSearchersFactory(conf: ConfigFactory) -> Searcher:
@@ -22,18 +25,20 @@ class ImmoBot():
                  searchFactory: Callable[[ConfigFactory], Searcher]):
         self.searchFactory = searchFactory
         self.conf = conf
+        self.logger = getLogger()
 
     def job(self, searcher: Searcher) -> None:
         search_results = searcher.search_new()
         if len(search_results) > 0:
-            print("Found new property(ies) and sending them to telegram...")
+            self.logger.info(
+                "Found new property(ies) and sending them to telegram...")
             messages = [f"New property found {k}\n{v!s}"
                         for k, v in search_results.items()]
             ts.send(messages=messages)
-            print("... property(ies) sent")
+            self.logger.info("... property(ies) sent")
 
     def start(self) -> None:
-        print("Starting ImmoBot")
+        self.logger.info("Starting ImmoBot")
         with self.searchFactory(self.conf) as searcher:
             try:
                 schedule.every(self.conf["general.bot.frequency"])\
@@ -43,10 +48,11 @@ class ImmoBot():
                     schedule.run_pending()
                     time.sleep(self.conf["general.bot.sleep"])
             except KeyboardInterrupt:
-                print("ImmoBot closing down")
+                self.logger.info("ImmoBot closing down")
 
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
+    initLogging(conf)
     bot = ImmoBot(conf, immowebFactory)
     bot.start()

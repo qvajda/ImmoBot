@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait as wait
 
+from logging_utils import initLogging
 from details import DetailFinder
 from details import Details
 from details import SeleniumDetailFinder
@@ -78,7 +79,7 @@ class SingleRealoSearcher(Searcher):
                                item in search_config.items()])
         self.url = f"{self.conf['realo.search_url']}{postalCode}?{url_params}"
         # TODO replace print with proper log
-        print(f"Realo search {self.url=}")
+        self.logger.debug(f"Realo search {self.url=}")
 
     def search_all(self):
         properties = {}
@@ -109,7 +110,7 @@ class SingleRealoSearcher(Searcher):
         # TODO handle error if no list of properties
         results = list_of_properties.find_elements_by_xpath(xpath)
         if len(results) == 0:
-            print(f"No results found fitting {xpath=}")
+            self.logger.warn(f"No results found fitting {xpath=}")
         else:
             properties.update({find_id(result): find_link(result)
                                for result in results})
@@ -152,6 +153,7 @@ def realoFactory(conf: ConfigFactory) -> Searcher:
 
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/myConf.conf")
+    initLogging(conf)
     # realo_detail = RealoDetailFinder(conf)
     # test_id = "103682"
     # test_url = "https://www.realo.be/en/rue-prince-royal-21-1050-ixelles-elsene/103682?l=244615180"

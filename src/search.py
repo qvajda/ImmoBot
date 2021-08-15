@@ -4,6 +4,7 @@ from typing import List
 from typing import Optional
 from typing import Dict
 import shelve
+from logging import getLogger
 
 from details import DetailFinder
 from details import Details
@@ -17,6 +18,7 @@ class Searcher(ABC):
         if detailFinder is None:
             detailFinder = DetailFinder(conf)
         self.detailFinder = detailFinder
+        self.logger = getLogger()
 
     def __enter__(self):
         # startup selenium browser
@@ -59,15 +61,17 @@ class Searcher(ABC):
                           k, v in all_properties.items() if
                           k not in prevs}
         if len(new_properties) > 0:
-            print(f"Found {len(new_properties)} new properties on {self.name}:"
-                  f"{list(new_properties.keys())}")
+            self.logger.info(
+                f"Found {len(new_properties)} new properties on {self.name}:"
+                f"{list(new_properties.keys())}")
             prevs.update(new_properties)
             self.shelf["prevs"] = prevs  # TODO check if this line is needed
             self.shelf.sync()
         else:
-            print(f"No new properties found on {self.name}")
+            self.logger.info(f"No new properties found on {self.name}")
             if self.conf[f"{self.name}.test_send"]:
-                print("Test sending with one of the latest seen properties")
+                self.logger.debug(
+                    "Test sending with one of the latest seen properties")
                 new_properties = {k: v
                                   for k, v in
                                   list(all_properties.items())[0:1]}
