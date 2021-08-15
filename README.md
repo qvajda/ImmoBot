@@ -6,6 +6,9 @@ It also computes some simple other metrics not usually available on immo website
 
 This currently looks through these (Belgian) Immo websites:
 - Immoweb
+- Immovlan
+- Realo
+
 However, the main search component could be easily extended to other websites.
 
 # Requirements
