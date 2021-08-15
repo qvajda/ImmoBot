@@ -87,7 +87,6 @@ class ImmovlanSearcher(Searcher):
 
         for page in range(1, self.maxpages + 1):
             self.browser.get(f"{self.url}&noindex={str(page)}")
-            # Immovlan has its results lazily loaded so we need to wait
             xpath = "//article[@class='list-view-item mb-3 card card-border']"
             results = self.browser.find_elements_by_xpath(xpath)
             if len(results) == 0:
