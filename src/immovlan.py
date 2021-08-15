@@ -98,7 +98,7 @@ class ImmovlanSearcher(Searcher):
 
 
 def immovlanFactory(conf: ConfigFactory) -> Searcher:
-    return ImmovlanSearcher(conf, DetailFinder(conf))
+    return ImmovlanSearcher(conf)
 
 
 if __name__ == '__main__':
