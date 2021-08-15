@@ -5,11 +5,9 @@ import copy
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait as wait
-from selenium.common.exceptions import TimeoutException
 
 from details import DetailFinder
 from details import Details
-from details import CompleteDetails
 from details import SeleniumDetailFinder
 from search import Searcher
 from search import MultiSearcher
@@ -74,6 +72,8 @@ class SingleRealoSearcher(Searcher):
         # turn postal codes config into a single string
         postalCode = self.conf["realo.postalCode"]
         self.name = f"realo{postalCode}"
+        # dirty hack to keep conf sane
+        self.conf.put(f"realo{postalCode}", self.conf["realo"])
         url_params = '&'.join(["%s=%s" % item for
                                item in search_config.items()])
         self.url = f"{self.conf['realo.search_url']}{postalCode}?{url_params}"
