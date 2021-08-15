@@ -18,7 +18,7 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
         if len(results) == 0:
             self.logger.warn(
                 f"Can't find Immovlan formatted details for {url=}")
-            return url
+            return Details(url)
         info = results[0]
         self.logger.debug(f"Found some details for {url=}")
         street_xpath = ".//span[contains(@class, 'street-line')]"

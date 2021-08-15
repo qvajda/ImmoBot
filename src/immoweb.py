@@ -18,7 +18,7 @@ class ImmowebDetailFinder(SeleniumDetailFinder):
         if len(results) == 0:
             self.logger.warn(
                 f"Can't find Immoweb formatted details for {url=}")
-            return url
+            return Details(url)
         self.logger.debug(f"Found some details for {url=}")
         infos = [line.strip() for line in results[0].text.split("\n")]
         address = infos[-2].replace("Ask for the exact address",
