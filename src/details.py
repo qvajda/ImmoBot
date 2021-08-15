@@ -1,5 +1,6 @@
 from pyhocon import ConfigFactory
 from typing import Dict
+from typing import Optional
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
@@ -11,16 +12,21 @@ from browser import launch_selenium
 @dataclass
 class Details:
     """Class representing details of an immo property."""
-    price: int
-    address: str
+    price: Optional[int] = None
+    address: Optional[str] = None
     url: str
-    bedrooms: int
-    area: int
+    bedrooms: Optional[int] = None
+    area: Optional[int] = None
     price_per_sqm: float = field(init=False)
     # TODO add agency name, PEB, garden size, bathrooms
 
     def __post_init__(self):
-        self.price_per_sqm = self.price / self.area
+        """ Post init method to compute fields derived
+        from the values of others. """
+        if self.price is None or self.area is None:
+            self.price_per_sqm = None
+        else:
+            self.price_per_sqm = self.price / self.area
 
     def __str__(self) -> str:
         return "\n".join([f"Address: {self.address}",
