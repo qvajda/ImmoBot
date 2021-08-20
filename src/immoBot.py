@@ -34,7 +34,18 @@ class ImmoBot():
                 "Found new property(ies) and sending them to telegram...")
             messages = [f"New property found {k}\n{v!s}"
                         for k, v in search_results.items()]
-            ts.send(messages=messages)
+            if len(messages) < 10:
+                ts.send(messages=messages)
+            else:
+                messages_chunks = [messages[x:x + 10]
+                                   for x in range(0, len(messages), 10)]
+                first = True
+                for chunk in messages_chunks:
+                    if not first:
+                        time.sleep(5)
+                    ts.send(messages=chunk)
+                    first = False
+
             self.logger.info("... property(ies) sent")
 
     def start(self) -> None:
