@@ -30,7 +30,9 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
         address = f"{city} | {street}"
         price_xpath = ".//span[contains(@class, 'price-label')]"
         price_elem = info.find_element_by_xpath(price_xpath)
-        price = int(price_elem.text.strip().replace("\u202f", "")[:-1])
+        price = int(price_elem.text.strip()
+                              .replace("\u202f", "")[:-1]
+                              .strip().split(' ')[-1])
         text_xpath = ".//div[@class = 'ico-text']"
         bedroom_xpath = ".//div[contains(@class, 'NrOfBedrooms')]"
         bedroom_elem = info.find_element_by_xpath(bedroom_xpath)
@@ -107,8 +109,8 @@ if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
     initLogging(conf)
     immovlan_detail = ImmovlanDetailFinder(conf)
-    test_id = "vam50427"
-    test_url = "https://immo.vlan.be/en/detail/residence/for-sale/1040/etterbeek/vam50427"
+    test_id = "vaw41412"
+    test_url = "https://immo.vlan.be/en/detail/residence/in-public-sale/1170/watermaal-bosvoorde/vaw41412"
     detailed = immovlan_detail.findFor(props={test_id: test_url, })
     for prop, detail in detailed.items():
         print(f"{prop=} :")
