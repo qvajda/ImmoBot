@@ -30,7 +30,11 @@ class CompleteDetails(Details):
     def __post_init__(self):
         """ Post init method to compute fields derived
         from the values of others. """
-        self.price_per_sqm = self.price / self.area
+        # TODO better deal with None values
+        if self.price is None or self.area is None:
+            self.price_per_sqm = -1.0
+        else:
+            self.price_per_sqm = self.price / self.area
 
     def __str__(self) -> str:
         return "\n".join([f"Address: {self.address}",

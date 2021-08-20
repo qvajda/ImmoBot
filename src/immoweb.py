@@ -23,14 +23,21 @@ class ImmowebDetailFinder(SeleniumDetailFinder):
         infos = [line.strip() for line in results[0].text.split("\n")]
         address = infos[-2].replace("Ask for the exact address",
                                     "No exact address")
-        price = [int(line[:-1])
+        price = [int(line[:-1].split(" ")[-1])
                  for line in infos if
                  line.endswith('€')][0]
-        bedrooms_area = [line.split('|')
-                         for line in infos if
-                         line.endswith('m²')][0]
-        bedrooms = int(bedrooms_area[0].strip().split(' ')[0])
-        area = int(bedrooms_area[1].strip().split(' ')[0])
+        bedrooms_area_lines = [line.split('|')
+                               for line in infos if
+                               line.endswith('m²')]
+        bedrooms = None
+        area = None
+        if len(bedrooms_area_lines) == 0:
+            bedrooms = int([line.strip().split(" ")[0] for line in infos if
+                            line.endswith("bedrooms")][0])
+        else:
+            bedrooms_area = bedrooms_area_lines[0]
+            bedrooms = int(bedrooms_area[0].strip().split(' ')[0])
+            area = int(bedrooms_area[1].strip().split(' ')[0])
         # TODO add agency name, PEB, garden size, bathrooms
         return CompleteDetails(url, price, address, bedrooms, area)
 
@@ -94,10 +101,9 @@ def immowebFactory(conf: ConfigFactory) -> Searcher:
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
     initLogging(conf)
-    # getattr(mymodule, variablename)
     # immoweb_detail = ImmowebDetailFinder(conf)
-    # test_id = "9355678"
-    # test_url = "https://www.immoweb.be/en/classified/house/for-sale/saint-josse-ten-noode/1030/9355678"
+    # test_id = "9480757"
+    # test_url = "https://www.immoweb.be/en/classified/house/for-sale/uccle/1180/9480757?searchId=6120054583193"
     # detailed = immoweb_detail.findFor(props={test_id: test_url, })
     # for prop, detail in detailed.items():
     #     print(f"{prop=} :")
