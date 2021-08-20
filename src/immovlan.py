@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from pyhocon import ConfigFactory
 from typing import Optional
 
@@ -39,10 +40,13 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
         bedrooms = int(bedroom_elem.find_element_by_xpath(text_xpath)
                                    .get_attribute("innerHTML").strip())
         area_xpath = ".//div[contains(@class, 'LivableSurface')]"
-        area_elem = info.find_element_by_xpath(area_xpath)
-        area = int(area_elem.find_element_by_xpath(text_xpath)
-                            .get_attribute("innerHTML")
-                            .strip().split(" ")[0])
+        try:
+            area_elem = info.find_element_by_xpath(area_xpath)
+            area = int(area_elem.find_element_by_xpath(text_xpath)
+                                .get_attribute("innerHTML")
+                                .strip().split(" ")[0])
+        except NoSuchElementException:
+            area = None
         # TODO add agency name, PEB, garden size, bathrooms
         return CompleteDetails(url, price, address, bedrooms, area)
 
