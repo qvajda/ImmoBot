@@ -102,18 +102,12 @@ def immowebFactory(conf: ConfigFactory) -> Searcher:
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
     initLogging(conf)
-    immoweb_detail = ImmowebDetailFinder(conf)
-    test_id = "9479036"
-    test_url = "https://www.immoweb.be/en/classified/apartment-block/for-sale/brussels-city/1000/9479036?searchId=61200b6c5e145"
-    detailed = immoweb_detail.findFor(props={test_id: test_url, })
-    for prop, detail in detailed.items():
-        print(f"{prop=} :")
-        print(detail)
-    # with immowebFactory(conf) as immoweb:
-    #     # immoweb.search_new()
-    #     props = ['9480757', '9426149', '9479853', '9479265', '9479125', '9479036', '9373140', '9478543', '9477346', '9475627', '9474983', '9474209', '9474208', '9473445']
-    #     for prop in props:
-    #         prevs_sanitized = {k: v for k, v in immoweb.shelf["prevs"].items() if
-    #                            k not in props}
-    #         immoweb.shelf["prevs"] = prevs_sanitized
-    #         immoweb.shelf.sync()
+    # immoweb_detail = ImmowebDetailFinder(conf)
+    # test_id = "9479036"
+    # test_url = "https://www.immoweb.be/en/classified/apartment-block/for-sale/brussels-city/1000/9479036?searchId=61200b6c5e145"
+    # detailed = immoweb_detail.findFor(props={test_id: test_url, })
+    # for prop, detail in detailed.items():
+    #     print(f"{prop=} :")
+    #     print(detail)
+    with immowebFactory(conf) as immoweb:
+        immoweb.search_new()
