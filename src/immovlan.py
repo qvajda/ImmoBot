@@ -23,8 +23,11 @@ class ImmovlanDetailFinder(SeleniumDetailFinder):
         info = results[0]
         self.logger.debug(f"Found some details for {url=}")
         street_xpath = ".//span[contains(@class, 'street-line')]"
-        street = info.find_element_by_xpath(street_xpath)\
-                     .get_attribute("innerHTML").strip()
+        try:
+            street = info.find_element_by_xpath(street_xpath)\
+                         .get_attribute("innerHTML").strip()
+        except NoSuchElementException:
+            street = "No exact address"
         # TODO Exception handling if no address ?
         city_xpath = ".//span[contains(@class, 'city-line')]"
         city = info.find_element_by_xpath(city_xpath).text.strip()
@@ -113,8 +116,8 @@ if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
     initLogging(conf)
     immovlan_detail = ImmovlanDetailFinder(conf)
-    test_id = "vaw41412"
-    test_url = "https://immo.vlan.be/en/detail/residence/in-public-sale/1170/watermaal-bosvoorde/vaw41412"
+    test_id = "vaw41723"
+    test_url = "https://immo.vlan.be/en/detail/residence/for-sale/1030/schaarbeek/vaw41723"
     detailed = immovlan_detail.findFor(props={test_id: test_url, })
     for prop, detail in detailed.items():
         print(f"{prop=} :")
