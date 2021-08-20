@@ -77,6 +77,22 @@ class Searcher(ABC):
                                   list(all_properties.items())[0:1]}
         return self.detailFinder.findFor(new_properties)
 
+    def forget(self, properties: List[str]) -> None:
+        """
+        Forgets ever seeing the given properties.
+        When searching for new properties, these forgotten properties
+        will reappear again.
+        """
+        prevs_sanitized = {prop: v for prop, v in
+                           self.shelf["prevs"].items() if
+                           prop not in properties}
+        forgotten = [prop for prop in self.shelf["prevs"] if
+                     prop not in prevs_sanitized]
+        self.logger.debug(f"The following {self.name} "
+                          f"properties about to be {forgotten = }")
+        self.shelf["prevs"] = prevs_sanitized
+        self.shelf.sync()
+
 
 class MultiSearcher(Searcher):
     name = "MultiSearcher"
@@ -107,3 +123,7 @@ class MultiSearcher(Searcher):
         for searcher in self.searchers:
             res.update(searcher.search_new())
         return res
+
+    def forget(self, properties: List[str]) -> None:
+        for searcher in self.searchers:
+            searcher.forget(properties)
