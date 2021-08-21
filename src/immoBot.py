@@ -9,6 +9,7 @@ from immoweb import immowebFactory
 from immovlan import immovlanFactory
 from realo import realoFactory
 from logging import getLogger
+from typing import List
 
 from logging_utils import initLogging
 
@@ -27,26 +28,19 @@ class ImmoBot():
         self.conf = conf
         self.logger = getLogger()
 
+    def send(self, messages: List[str]) -> None:
+        self.logger.info(
+            "Found new property(ies) and sending them to log...")
+        for message in messages:
+            self.logger.info(message)
+        self.logger.info("... property(ies) sent")
+
     def job(self, searcher: Searcher) -> None:
         search_results = searcher.search_new()
         if len(search_results) > 0:
-            self.logger.info(
-                "Found new property(ies) and sending them to telegram...")
             messages = [f"New property found {k}\n{v!s}"
                         for k, v in search_results.items()]
-            if len(messages) < 10:
-                ts.send(messages=messages)
-            else:
-                messages_chunks = [messages[x:x + 10]
-                                   for x in range(0, len(messages), 10)]
-                first = True
-                for chunk in messages_chunks:
-                    if not first:
-                        time.sleep(5)
-                    ts.send(messages=chunk)
-                    first = False
-
-            self.logger.info("... property(ies) sent")
+            self.send(messages)
 
     def start(self) -> None:
         self.logger.info("Starting ImmoBot")
@@ -60,6 +54,24 @@ class ImmoBot():
                     time.sleep(self.conf["general.bot.sleep"])
             except KeyboardInterrupt:
                 self.logger.info("ImmoBot closing down")
+
+
+class ImmoBotTelegram(ImmoBot):
+    def send(self, messages: List[str]) -> None:
+        self.logger.info(
+            "Found new property(ies) and sending them to telegram...")
+        if len(messages) < 10:
+            ts.send(messages=messages)
+        else:
+            messages_chunks = [messages[x:x + 10]
+                               for x in range(0, len(messages), 10)]
+            first = True
+            for chunk in messages_chunks:
+                if not first:
+                    time.sleep(5)
+                ts.send(messages=chunk)
+                first = False
+        self.logger.info("... property(ies) sent")
 
 
 if __name__ == '__main__':
