@@ -115,12 +115,12 @@ def immovlanFactory(conf: ConfigFactory) -> Searcher:
 if __name__ == '__main__':
     conf = ConfigFactory.parse_file("configuration/template.conf")
     initLogging(conf)
-    immovlan_detail = ImmovlanDetailFinder(conf)
-    test_id = "vaw41723"
-    test_url = "https://immo.vlan.be/en/detail/residence/for-sale/1030/schaarbeek/vaw41723"
-    detailed = immovlan_detail.findFor(props={test_id: test_url, })
-    for prop, detail in detailed.items():
-        print(f"{prop=} :")
-        print(detail)
-    # with ImmovlanSearcher(conf) as immovlan:
-    #     immovlan.search_new()
+    # immovlan_detail = ImmovlanDetailFinder(conf)
+    # test_id = "vaw41723"
+    # test_url = "https://immo.vlan.be/en/detail/residence/for-sale/1030/schaarbeek/vaw41723"
+    # detailed = immovlan_detail.findFor(props={test_id: test_url, })
+    # for prop, detail in detailed.items():
+    #     print(f"{prop=} :")
+    #     print(detail)
+    with ImmovlanSearcher(conf) as immovlan:
+        immovlan.search_new()
