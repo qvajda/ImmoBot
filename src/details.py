@@ -38,12 +38,25 @@ class CompleteDetails(Details):
         else:
             self.price_per_sqm = self.price / self.area
 
+    def __price_str__(self):
+        return "unknown" if not self.price else f"{self.price}€"
+
+    def __area_str__(self):
+        return "unknown" if not self.area else f"{self.area}m²"
+
+    def __price_per_sqm_str__(self):
+        return "unknown" if not self.price_per_sqm else\
+            f"{self.price_per_sqm:0.1f}€"
+
+    def __bedrooms_str__(self):
+        return "unknown" if not self.bedrooms else f"{self.bedrooms}"
+
     def __str__(self) -> str:
         return "\n".join([f"Address: {self.address}",
-                          f"Price: {self.price}€",
-                          f"Area: {self.area}m²",
-                          f"Price per m²: {self.price_per_sqm:0.1f}€",
-                          f"Bedrooms: {self.bedrooms}",
+                          f"Price: {self.__price_str__()}",
+                          f"Area: {self.__area_str__()}",
+                          f"Price per m²: {self.__price_per_sqm_str__()}",
+                          f"Bedrooms: {self.__bedrooms_str__()}",
                           self.url])
 
 
