@@ -32,4 +32,9 @@ While this second picture shows what you'll receive on telegram from the preoper
 
 # How to setup for yourself
 - First if not done already, follow [this tutorial](https://medium.com/@robertbracco1/how-to-write-a-telegram-bot-to-send-messages-with-python-bcdf45d0a580) on setting up your telegram bot
-- Once done, make a copy of the 'template.conf' file and add your newly generated API key to it (or not ?)
+- Once done, make a copy of the 'template.conf' file
+- Rename your copied config to 'myConf.conf' or update 'main.py' to point towards your config
+- Launch the bot
+```bash
+python3 src/main.py
+```
