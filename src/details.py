@@ -4,6 +4,8 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+
 from logging import getLogger
 
 from browser import launch_selenium
@@ -63,7 +65,28 @@ class SeleniumDetailFinder(DetailFinder, metaclass=ABCMeta):
         if len(props) == 0:
             return props
         browser = launch_selenium(self.conf["general"])
-        detailed = {prop: self.__findDetail__(url, browser) for
-                    prop, url in props.items()}
+        detailed = {}
+        for prop, url in props.items():
+            try:
+                detailed[prop] = self.__findDetail__(url, browser)
+            except (NoSuchElementException, IndexError, ValueError):
+                # These error types correspond to:
+                # NoSuchElementException:
+                #    Selenium not finding the expected element on the page
+                # IndexError:
+                #    The size of a text after splitting is too small
+                #    e.g. not all element expected in the same text zone are
+                #    present
+                # ValueError:
+                #    Text zone that was expected to only contain a number ha
+                #    a different format than is handled
+                #    e.g. instead of just the price, we have a
+                #    'Starting price xxxx$' format
+                self.logger.error("Unexcpected error encountered "
+                                  f"while looking for details of {prop} "
+                                  f"in page {url}")
+                self.logger.exception("Exception: ")
+                # Safely recover by using a less complete Details
+                detailed[prop] = Details[url]
         browser.quit()
         return detailed
